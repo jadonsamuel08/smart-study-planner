@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your Smart Study Plan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-graduation-cap me-2"></i>Smart Study Planner
+        </a>
+        <div class="ms-auto">
+            <a class="btn btn-outline-light btn-sm" href="/">
+                <i class="fas fa-plus me-1"></i>New Plan
+            </a>
+        </div>
+    </div>
+    </nav>
+
+    <div class="container">
+    
+    <!-- Success Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="card-title text-success mb-3">
+                        <i class="fas fa-check-circle me-2"></i>Your Study Plan is Ready!
+                    </h2>
+                    <p class="text-muted">Here's your personalized study schedule optimized for your subjects and available time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+        
+        <!-- Study Plan Overview -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-calendar-check text-primary me-2"></i>Study Plan Overview
+            </h5>
+            
+            <!-- Summary Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_hours }}</div>
+                        <div>Total Hours</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ table|length }}</div>
+                        <div>Subjects</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_allocated }}</div>
+                        <div>Allocated</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if note %}
+            <div class="alert alert-info">
+                <i class="fas fa-sticky-note me-2"></i><strong>Study Notes:</strong> {{ note }}
+            </div>
+            {% endif %}
+
+            <!-- Enhanced Study Schedule Table -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                <thead>
+                    <tr>
+                    <th><i class="fas fa-book me-1"></i>Subject</th>
+                    <th><i class="fas fa-signal me-1"></i>Difficulty</th>
+                    <th><i class="fas fa-exclamation-triangle me-1"></i>Urgency</th>
+                    <th><i class="fas fa-clock me-1"></i>Study Hours</th>
+                    <th><i class="fas fa-percentage me-1"></i>Share</th>
+                    <th><i class="fas fa-chart-bar me-1"></i>Visual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table %}
+                    <tr>
+                    <td>
+                        <strong>{{ row.subject }}</strong>
+                    </td>
+                    <td>
+                        <span class="difficulty-indicator difficulty-{{ row.difficulty|int }}"></span>
+                        {{ row.difficulty }}
+                    </td>
+                    <td>
+                        {% if row.urgency|int >= 4 %}
+                            <span class="badge bg-danger">{{ row.urgency }}</span>
+                        {% elif row.urgency|int >= 3 %}
+                            <span class="badge bg-warning text-dark">{{ row.urgency }}</span>
+                        {% else %}
+                            <span class="badge bg-success">{{ row.urgency }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong class="text-primary">{{ row.allocated_hours }}</strong> hrs
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ row.share_pct }}%</span>
+                    </td>
+                    <td>
+                        <div class="progress" style="width: 80px; height: 8px;">
+                            <div class="progress-bar" style="width: {{ row.share_pct }}%"></div>
+                        </div>
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+
+            <!-- Download Options -->
+            <div class="d-flex gap-2 mt-3">
+                <form method="POST" action="/download_csv">
+                    <input type="hidden" name="csv_text" value="{{ csv_text|e }}">
+                    <input type="hidden" name="filename" value="study_plan_{{ timestamp }}.csv">
+                    <button class="btn btn-outline-secondary">
+                        <i class="fas fa-download me-1"></i>Download CSV
+                    </button>
+                </form>
+                <button class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Print Plan
+                </button>
+            </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Chart Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+            <h6 class="card-subtitle mb-3">
+                <i class="fas fa-chart-bar me-2"></i>Study Time Distribution
+            </h6>
+            <div class="chart-container">
+                <canvas id="hoursChart"></canvas>
+            </div>
+            </div>
+        </div>
+
+        <!-- Study Schedule Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>Your Daily Study Schedule
+            </h5>
+            <p class="text-muted mb-3">
+                <i class="fas fa-clock me-1"></i>Study time: {{ study_start_time }} - {{ study_end_time }} 
+                | <i class="fas fa-stopwatch me-1"></i>{{ schedule_stats.total_study_blocks }} study blocks 
+                | <i class="fas fa-coffee me-1"></i>{{ schedule_stats.total_break_blocks }} breaks
+            </p>
+            
+            <!-- Time Constraint Warnings -->
+            {% if schedule_warnings %}
+            <div class="alert alert-warning mb-3">
+                <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-1"></i>Time Constraint Notice:</h6>
+                {% for warning in schedule_warnings %}
+                <p class="mb-1 small">{{ warning }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Break Settings Used -->
+            <div class="alert alert-light mb-3">
+                <h6 class="mb-2"><i class="fas fa-cog me-1"></i>Break Settings Used:</h6>
+                <div class="row g-2 small">
+                    <div class="col-md-3">
+                        <strong>Duration:</strong> {{ break_duration }} min per break
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Frequency:</strong> 
+                        {% if break_frequency == "frequent" %}
+                            Frequent (More breaks)
+                        {% elif break_frequency == "minimal" %}
+                            Minimal (Fewer breaks)
+                        {% else %}
+                            Auto (Balanced)
+                        {% endif %}
+                    </div>
+                    {% if max_breaks %}
+                    <div class="col-md-3">
+                        <strong>Max Breaks:</strong> {{ max_breaks }}
+                    </div>
+                    {% endif %}
+                    {% if total_break_time %}
+                    <div class="col-md-3">
+                        <strong>Total Break Time:</strong> {{ total_break_time }} min
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if schedule %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                    <th><i class="fas fa-clock me-1"></i>Time</th>
+                    <th><i class="fas fa-book me-1"></i>Activity</th>
+                    <th><i class="fas fa-stopwatch me-1"></i>Duration</th>
+                    <th><i class="fas fa-info-circle me-1"></i>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for block in schedule %}
+                    <tr class="{% if block.type == 'break' %}table-light{% endif %}">
+                    <td>
+                        <strong>{{ block.start_time }} - {{ block.end_time }}</strong>
+                    </td>
+                    <td>
+                        {% if block.type == 'break' %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-coffee me-1"></i>{{ block.subject }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-primary">
+                                <i class="fas fa-book me-1"></i>{{ block.subject }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ block.duration }}</td>
+                    <td>
+                        {% if block.type == 'study' %}
+                            <small class="text-muted">
+                                Difficulty: 
+                                {% for i in range(block.difficulty|int) %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% endfor %}
+                                | Urgency: 
+                                {% if block.urgency|int >= 4 %}
+                                    <span class="text-danger">High</span>
+                                {% elif block.urgency|int >= 3 %}
+                                    <span class="text-warning">Medium</span>
+                                {% else %}
+                                    <span class="text-success">Low</span>
+                                {% endif %}
+                            </small>
+                        {% else %}
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Take a break, stretch, or grab a snack
+                            </small>
+                        {% endif %}
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No schedule generated. Please add subjects and try again.
+            </div>
+            {% endif %}
+
+            <!-- Schedule Download -->
+            {% if schedule %}
+            <div class="d-flex gap-2 mt-3">
+                <form method="POST" action="/download_schedule">
+                    <input type="hidden" name="schedule_csv" value="{{ schedule_csv|e }}">
+                    <input type="hidden" name="filename" value="study_schedule_{{ timestamp }}.csv">
+                    <button class="btn btn-outline-info">
+                        <i class="fas fa-download me-1"></i>Download Schedule
+                    </button>
+                </form>
+                <button class="btn btn-outline-primary" onclick="printSchedule()">
+                    <i class="fas fa-print me-1"></i>Print Schedule
+                </button>
+            </div>
+            {% endif %}
+            </div>
+        </div>
+        </div>
+
+        <!-- Enhanced Sidebar -->
+        <div class="col-lg-4">
+        
+        <!-- Schedule Stats -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+            <h6><i class="fas fa-chart-line me-2"></i>Schedule Statistics</h6>
+            <div class="row g-2 text-center">
+                <div class="col-6">
+                    <div class="stat-card p-2">
+                        <div class="stat-number small">{{ schedule_stats.total_study_blocks }}</div>
+                        <div class="small">Study Blocks</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-2">
+                        <div class="stat-number small">{{ schedule_stats.total_study_hours }}</div>
+                        <div class="small">Study Hours</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-2">
+                        <div class="stat-number small">{{ schedule_stats.total_break_blocks }}</div>
+                        <div class="small">Breaks</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-2">
+                        <div class="stat-number small">{{ schedule_stats.efficiency }}%</div>
+                        <div class="small">Efficiency</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+            <h6><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+            <div class="d-grid gap-2">
+                <a class="btn btn-primary" href="/">
+                    <i class="fas fa-plus me-1"></i>Create New Plan
+                </a>
+                {% if schedule %}
+                <form method="POST" action="/download_schedule" class="d-grid">
+                    <input type="hidden" name="schedule_csv" value="{{ schedule_csv|e }}">
+                    <input type="hidden" name="filename" value="study_schedule_{{ timestamp }}.csv">
+                    <button class="btn btn-outline-info">
+                        <i class="fas fa-calendar-download me-1"></i>Download Schedule
+                    </button>
+                </form>
+                {% endif %}
+                <form method="POST" action="/download_csv" class="d-grid">
+                    <input type="hidden" name="csv_text" value="{{ csv_text|e }}">
+                    <input type="hidden" name="filename" value="study_plan_{{ timestamp }}.csv">
+                    <button class="btn btn-outline-success">
+                        <i class="fas fa-download me-1"></i>Download CSV
+                    </button>
+                </form>
+                <button class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Print Plan
+                </button>
+            </div>
+            </div>
+        </div>
+
+        <!-- Study Tips -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+            <h6><i class="fas fa-lightbulb me-2"></i>Study Tips</h6>
+            <ul class="small mb-0">
+                <li><strong>Focus blocks:</strong> Study in 25-50 minute intervals</li>
+                <li><strong>Breaks:</strong> Take 5-10 minute breaks between subjects</li>
+                <li><strong>Priority order:</strong> Start with highest urgency subjects</li>
+                <li><strong>Review:</strong> End each session with a quick review</li>
+            </ul>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+            <h6><i class="fas fa-cogs me-2"></i>How It Works</h6>
+            <p class="small text-muted">We calculate weight = difficulty + urgency, then allocate your study hours proportionally. Higher weighted subjects get more time.</p>
+            </div>
+        </div>
+
+        <!-- Study Schedule Suggestions -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+            <h6><i class="fas fa-clock me-2"></i>Suggested Schedule</h6>
+            <div class="small">
+                <p><strong>Morning (8-12):</strong> Hardest subjects when you're fresh</p>
+                <p><strong>Afternoon (1-5):</strong> Moderate difficulty subjects</p>
+                <p><strong>Evening (6-8):</strong> Review and light subjects</p>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    const labels = {{ labels|tojson }};
+    const data = {{ hours|tojson }};
+
+    const ctx = document.getElementById('hoursChart').getContext('2d');
+    
+    // Generate colors for each subject
+    const colors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(118, 75, 162, 0.8)',
+        'rgba(255, 99, 132, 0.8)',
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(255, 205, 86, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(153, 102, 255, 0.8)',
+        'rgba(255, 159, 64, 0.8)'
+    ];
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Study Hours',
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + 'h';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { 
+                    display: false 
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: '#667eea',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const hours = context.parsed.y;
+                            const percentage = ((hours / {{ total_hours }}) * 100).toFixed(1);
+                            return `${hours} hours (${percentage}% of total)`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function printSchedule() {
+        // Create a new window for printing just the schedule
+        const scheduleWindow = window.open('', '_blank');
+        const scheduleContent = document.querySelector('.card:has(.card-title:contains("Your Daily Study Schedule"))');
+        
+        scheduleWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Study Schedule</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    @media print {
+                        .no-print { display: none !important; }
+                        body { font-size: 12px; }
+                        .table { font-size: 11px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container mt-3">
+                    <h2 class="text-center mb-4">Daily Study Schedule</h2>
+                    ${scheduleContent ? scheduleContent.outerHTML : '<p>No schedule available</p>'}
+                </div>
+            </body>
+            </html>
+        `);
+        
+        scheduleWindow.document.close();
+        scheduleWindow.print();
+    }
+    </script>
+</body>
+</html>

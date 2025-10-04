@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Study Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-graduation-cap me-2"></i>Smart Study Planner
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            <a href="/tips" class="btn btn-outline-light btn-sm me-3">
+                <i class="fas fa-lightbulb me-1"></i>Study Tips
+            </a>
+            <div class="text-white small">
+                <i class="fas fa-clock me-1"></i>Quick, smart schedules for busy students
+            </div>
+        </div>
+    </div>
+    </nav>
+
+    <div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+        
+        <!-- Welcome Section -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-3">
+                    <i class="fas fa-rocket text-primary me-2"></i>Welcome to Smart Study Planner
+                </h2>
+                <p class="text-muted mb-4">Create personalized study schedules that adapt to your subjects' difficulty and urgency. Get the most out of your study time!</p>
+                
+                <!-- Quick Stats -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number"><i class="fas fa-brain"></i></div>
+                            <div>Smart Allocation</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number"><i class="fas fa-chart-line"></i></div>
+                            <div>Visual Analytics</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number"><i class="fas fa-download"></i></div>
+                            <div>Export Ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Planner Form -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-calendar-plus text-primary me-2"></i>Create Your Study Plan
+            </h5>
+            <p class="text-muted">Add your subjects, rate their difficulty and urgency, then generate a balanced study schedule.</p>
+
+            <form id="planner-form" method="POST" action="/plan">
+                <!-- Subjects Section -->
+                <div class="mb-4">
+                    <h6 class="mb-3">
+                        <i class="fas fa-book me-2"></i>Your Subjects
+                        <span class="badge bg-primary ms-2" id="subject-count">0 subjects</span>
+                    </h6>
+                    <div id="subjects-wrapper">
+                    <!-- dynamic rows inserted here -->
+                    </div>
+                    
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" id="add-row" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i>Add Subject
+                        </button>
+                        <button type="button" id="reset-sample" class="btn btn-outline-secondary">
+                            <i class="fas fa-refresh me-1"></i>Load Sample
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Study Settings -->
+                <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-clock me-1"></i>Total Study Hours Per Day
+                    </label>
+                    <input type="number" step="0.25" min="0.5" max="12" name="total_hours" class="form-control" value="3" id="total-hours">
+                    <small class="text-muted">Recommended: 2-6 hours for optimal focus</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-sun me-1"></i>Study Start Time
+                    </label>
+                    <input type="time" name="study_start_time" class="form-control" value="08:00">
+                    <small class="text-muted">When do you want to start studying?</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-moon me-1"></i>Study End Time
+                    </label>
+                    <input type="time" name="study_end_time" class="form-control" value="22:00">
+                    <small class="text-muted">Latest time you want to study</small>
+                </div>
+                </div>
+
+                <!-- Break Preferences -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-coffee text-primary me-2"></i>Break Preferences (Optional)
+                        </h6>
+                        <p class="text-muted small">Customize your break schedule for optimal productivity</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-stopwatch me-1"></i>Break Duration
+                                </label>
+                                <input type="number" min="5" max="60" name="break_duration" class="form-control" value="15">
+                                <small class="text-muted">Minutes per break</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-list-ol me-1"></i>Max Breaks
+                                </label>
+                                <input type="number" min="1" max="20" name="max_breaks" class="form-control" placeholder="Auto">
+                                <small class="text-muted">Leave empty for auto</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Total Break Time
+                                </label>
+                                <input type="number" min="15" max="300" name="total_break_time" class="form-control" placeholder="Auto">
+                                <small class="text-muted">Total minutes for all breaks</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-sliders-h me-1"></i>Break Frequency
+                                </label>
+                                <select name="break_frequency" class="form-select">
+                                    <option value="auto">Auto (Balanced)</option>
+                                    <option value="frequent">Frequent (More breaks)</option>
+                                    <option value="minimal">Minimal (Fewer breaks)</option>
+                                </select>
+                                <small class="text-muted">How often to take breaks</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="alert alert-info small mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>Tips:</strong> 
+                                • Frequent breaks (25-min study + 5-min break) for intense focus
+                                • Minimal breaks (90-min study + 15-min break) for deep work
+                                • Auto mode balances study time and breaks optimally
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Study Notes -->
+                <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label">
+                        <i class="fas fa-sticky-note me-1"></i>Study Notes (Optional)
+                    </label>
+                    <input type="text" name="note" class="form-control" placeholder="e.g., focus on problem sets, review notes">
+                </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg" id="generate-btn">
+                        <i class="fas fa-magic me-2"></i>Generate Smart Study Plan
+                    </button>
+                </div>
+            </form>
+
+            <!-- Tips Section -->
+            <div class="tip-box mt-4">
+                <h6><i class="fas fa-lightbulb me-2"></i>Pro Tips</h6>
+                <ul class="mb-0 small">
+                    <li><strong>Difficulty (1-5):</strong> Rate how challenging each subject feels to you</li>
+                    <li><strong>Urgency (1-5):</strong> Consider upcoming deadlines and exam dates</li>
+                    <li><strong>Balance:</strong> Higher urgency + higher difficulty = more study time allocated</li>
+                </ul>
+            </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs text-primary me-2"></i>How It Works
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <i class="fas fa-calculator fa-2x text-primary mb-2"></i>
+                            <h6>Smart Calculation</h6>
+                            <p class="small text-muted">We calculate weight = difficulty + urgency for each subject</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <i class="fas fa-balance-scale fa-2x text-primary mb-2"></i>
+                            <h6>Proportional Allocation</h6>
+                            <p class="small text-muted">Your study hours are distributed based on calculated weights</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <i class="fas fa-chart-pie fa-2x text-primary mb-2"></i>
+                            <h6>Visual Results</h6>
+                            <p class="small text-muted">Get charts and downloadable CSV reports</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="fas fa-code me-1"></i>Built with Flask, Bootstrap, and Chart.js
+            </small>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+      // sample data from server
+    const sample = {{ sample | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
