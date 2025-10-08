@@ -311,14 +311,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support
-
-Having issues? Here's how to get help:
-
-- **📧 Email**: support@smartstudyplanner.com
-- **💬 Discord**: [Join our community](https://discord.gg/smartstudyplanner)
-- **🐛 Issues**: [GitHub Issues](https://github.com/yourusername/smart-study-planner/issues)
-- **📖 Documentation**: [Wiki](https://github.com/yourusername/smart-study-planner/wiki)
 
 ---
 
