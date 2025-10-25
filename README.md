@@ -139,17 +139,22 @@ The system intelligently handles scenarios where your requested study time excee
 
 <div align="center">
 
+<div align="center">
+
 ### Main Interface
-![Main Interface](docs/screenshots/main-interface.png)
-
-### Study Plan Results
-![Study Plan Results](docs/screenshots/study-plan.png)
-
-### Schedule View
-![Schedule View](docs/screenshots/schedule-view.png)
+<img src="static/screenshots/ScreenShot%202025-10-25%20at%206.53.41%E2%80%AFPM.png" alt="Main Interface" style="max-width:100%;height:auto;border:1px solid #eaeaea;border-radius:8px" />
 
 ### Break Customization
-![Break Customization](docs/screenshots/break-settings.png)
+<img src="static/screenshots/ScreenShot%202025-10-25%20at%206.54.02%E2%80%AFPM.png" alt="Break Customization" style="max-width:100%;height:auto;border:1px solid #eaeaea;border-radius:8px" />
+
+### Study Plan Results
+<img src="static/screenshots/ScreenShot%202025-10-25%20at%206.54.36%E2%80%AFPM.png" alt="Study Plan Results" style="max-width:100%;height:auto;border:1px solid #eaeaea;border-radius:8px" />
+
+### Schedule View
+<img src="static/screenshots/ScreenShot%202025-10-25%20at%206.54.50%E2%80%AFPM.png" alt="Schedule View" style="max-width:100%;height:auto;border:1px solid #eaeaea;border-radius:8px" />
+
+### Tips
+<img src="static/screenshots/ScreenShot%202025-10-25%20at%206.55.21%E2%80%AFPM.png" alt="Tips view" style="max-width:100%;height:auto;border:1px solid #eaeaea;border-radius:8px" />
 
 </div>
 
